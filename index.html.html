@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת ניהול לקוחות - CRM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --home-bg: #eef2f7;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --primary-color: #1e3a8a;
+            --primary-hover: #1e40af;
+            --border-color: #e2e8f0;
+            --card-bg: #f8fafc;
+            --card-border: #cbd5e1;
+            --table-odd: #ffffff;
+            --table-even: #f8fafc;
+            --input-bg: #ffffff;
+            --input-text: #333333;
+            --input-border: #ccc;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --home-bg: #1a202c;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary-color: #3b82f6;
+            --primary-hover: #60a5fa;
+            --border-color: #333333;
+            --card-bg: #252525;
+            --card-border: #444444;
+            --table-odd: #1e1e1e;
+            --table-even: #252525;
+            --input-bg: #2d2d2d;
+            --input-text: #ffffff;
+            --input-border: #444444;
+        }
+
+        body, html { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); height: 100%; width: 100%; transition: background 0.3s, color 0.3s; }
+        .container { max-width: 1250px; margin: 20px auto; background: var(--container-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        #home-screen { 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+            box-sizing: border-box;
+            text-align: center; 
+            padding: 40px; 
+            background: var(--home-bg); 
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            transition: background 0.3s;
+            position: relative;
+        }
+
+        .home-date-box {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: var(--container-bg);
+            border: 2px solid var(--primary-color);
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            unicode-bidi: embed;
+            text-align: center;
+        }
+
+        .home-theme-box {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            background: var(--container-bg);
+            border: 2px solid var(--primary-color);
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        .home-theme-box:hover {
+            transform: scale(1.05);
+        }
+
+        .home-clock-sub {
+            font-size: 13px;
+            color: #555;
+            margin-top: 3px;
+            font-weight: normal;
+        }
+
+        .brand-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            max-width: 950px;
+            width: 100%;
+        }
+
+        .header-title-box {
+            text-align: center;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        .styled-title-svg {
+            width: 100%;
+            max-width: 850px;
+            height: 100px;
+            overflow: visible;
+        }
+
+        .styled-title-text {
+            font-size: 42px;
+            font-weight: 900;
+            fill: var(--primary-color);
+            font-family: 'Frank Ruhl Hofshi', 'David', 'Times New Roman', serif;
+            letter-spacing: 1px;
+            filter: drop-shadow(0px 3px 2px rgba(0,0,0,0.15));
+        }
+
+        .menu-buttons { display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 35px; width: 100%; }
+        
+        .menu-btn { 
+            background-color: var(--primary-color); 
+            color: #ffffff; 
+            border: 4px solid var(--container-bg); 
+            width: 140px; 
+            height: 140px; 
+            border-radius: 50%; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 15px;
+            box-sizing: border-box;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2); 
+            transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s; 
+            text-decoration: none; 
+        }
+        .menu-btn:hover { 
+            background-color: var(--primary-hover); 
+            transform: scale(1.08);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.3);
+        }
+
+        .section-view { display: none; }
+        .back-bar { margin-bottom: 20px; display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+        .top-utilities-bar {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            display: flex;
+            gap: 10px;
+        }
+
+        .utility-btn {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: 2px solid #cbd5e1;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            transition: transform 0.2s;
+        }
+        .utility-btn:hover { transform: scale(1.05); }
+
+        .floating-home-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: 2px solid #cbd5e1;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            transition: background-color 0.3s, transform 0.2s;
+            display: none;
+        }
+        .floating-home-btn:hover { transform: scale(1.05); }
+
+        .back-btn { background-color: #718096; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .back-btn:hover { background-color: #4a5568; }
+
+        .top-excel-compact-box {
+            background: var(--card-bg);
+            border: 1px dashed var(--primary-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .top-excel-compact-box h4 {
+            margin: 0;
+            font-size: 13px;
+            color: var(--primary-color);
+            white-space: nowrap;
+        }
+
+        h1, h2, h3 { color: var(--primary-color); }
+        
+        .clients-sub-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 12px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.06);
+        }
+
+        .sub-nav-btn {
+            background-color: var(--container-bg);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-nav-btn:hover, .sub-nav-btn.active {
+            background-color: var(--primary-color);
+            color: #ffffff;
+        }
+
+        .btn-add-nav {
+            background-color: #276749 !important;
+            color: #ffffff !important;
+            border: 1px solid #276749 !important;
+        }
+        .btn-add-nav:hover { background-color: #1c4e36 !important; }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: var(--container-bg);
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 650px;
+            width: 90%;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-modal-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .table-responsive-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            background-color: var(--container-bg);
+            border: 1px solid var(--border-color);
+            margin: 15px 0;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0;
+            font-size: 14px; 
+        }
+
+        th { 
+            background-color: #f8fafc; 
+            color: #475569; 
+            font-weight: bold; 
+            font-size: 14px; 
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--border-color);
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        [data-theme="dark"] th {
+            background-color: #252525;
+            color: #cbd5e1;
+        }
+
+        td { 
+            padding: 10px 14px; 
+            text-align: right; 
+            color: var(--text-color); 
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .table-input-cell {
+            width: 80px;
+            padding: 5px;
+            font-size: 13px;
+            text-align: center;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        .table-select-cell {
+            padding: 5px;
+            font-size: 13px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            background: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        tr.row-client {
+            transition: background-color 0.15s ease;
+        }
+
+        tr.row-client:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] tr.row-client:hover {
+            background-color: #2d2d2d !important;
+        }
+
+        tr.row-active {
+            background-color: #ffffff;
+        }
+
+        tr.row-even {
+            background-color: #fafafa;
+        }
+
+        tr.row-alert {
+            background-color: #fef2f2 !important;
+        }
+
+        tr.row-warning {
+            background-color: #fffbeb !important;
+        }
+
+        .status-badge-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .icon-active { color: #16a34a; }
+        .icon-alert { color: #dc2626; }
+        .icon-warning { color: #d97706; }
+
+        .client-name-cell { 
+            font-weight: bold !important; 
+            font-size: 15px; 
+            color: #0f172a !important;
+        }
+
+        [data-theme="dark"] .client-name-cell {
+            color: #f8fafc !important;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid var(--input-border); border-radius: 4px; background-color: var(--input-bg); color: var(--input-text); }
+        
+        .color-picker-circle-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            margin-bottom: 12px;
+        }
+        .color-circle-input {
+            appearance: none;
+            -webkit-appearance: none;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .color-circle-input::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        .color-circle-input::-webkit-color-swatch {
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+        }
+
+        .logs-container-box {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        .log-item {
+            background: var(--container-bg);
+            border-right: 4px solid var(--primary-color);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .log-item-date { font-size: 12px; color: #718096; font-weight: bold; }
+
+        button { background-color: var(--primary-color); color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: var(--primary-hover); }
+        .btn-danger { background-color: #e53e3e; }
+        .btn-danger:hover { background-color: #c53030; }
+        .btn-edit { background-color: #d69e2e; }
+        .btn-edit:hover { background-color: #b7791f; }
+        .btn-export { background-color: #276749; font-weight: bold; }
+        .btn-export:hover { background-color: #22543d; }
+        
+        .dashboard-cards { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; }
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 20px; border-radius: 8px; flex: 1; min-width: 250px; text-align: center; position: relative; }
+        .card h3 { margin: 0 0 10px 0; color: var(--primary-color); font-size: 16px; }
+        .card p { font-size: 22px; font-weight: bold; margin: 0; color: var(--text-color); }
+        .card-highlight { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .card-highlight h3 { color: #166534; }
+        .card-highlight p { color: #15803d; font-size: 24px; }
+        
+        .card-alert { background: #fef2f2; border: 1px solid #fecaca; }
+        .card-alert h3 { color: #991b1b; }
+        .card-alert p { color: #dc2626; font-size: 24px; }
+
+        .card-delete-x {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-delete-x:hover { background: #c53030; }
+
+        body.print-mode .top-utilities-bar,
+        body.print-mode .floating-home-btn,
+        body.print-mode .clients-sub-nav,
+        body.print-mode .filter-bar,
+        body.print-mode .top-excel-compact-box,
+        body.print-mode .form-group,
+        body.print-mode .back-bar,
+        body.print-mode button {
+            display: none !important;
+        }
+        body.print-mode {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        body.print-mode .container {
+            max-width: 100% !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 10px !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div id="app-main-wrapper">
+        <div class="top-utilities-bar">
+            <button class="utility-btn" onclick="toggleDarkMode()">🌓 מצב לילה / בהיר</button>
+            <button class="utility-btn" onclick="togglePrintMode()" style="background-color: #276749;">🖨️ הדפס דוח (A4)</button>
+        </div>
+
+        <button id="floatingHomeBtn" class="floating-home-btn" onclick="showSection('home-screen')">🏠 מסך ראשי</button>
+
+        <div id="home-screen">
+            <div id="homeDateDisplay" class="home-date-box">
+                <span id="dateText">טוען תאריך...</span>
+                <div id="homeClockText" class="home-clock-sub">00:00:00</div>
+            </div>
+
+            <div class="home-theme-box" style="top: 85px;" onclick="openThemeModal()">
+                🎨 ערכות נושא
+            </div>
+
+            <div class="brand-container">
+                <div class="header-title-box">
+                    <svg class="styled-title-svg" viewBox="0 0 800 100">
+                        <text class="styled-title-text" x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">
+                            מערכת ניהול לקוחות - CRM
+                        </text>
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="menu-btn" onclick="showSection('clients-section')">ניהול לקוחות</button>
+                <button class="menu-btn" onclick="showSection('dashboard-section')">דשבורד ונתונים</button>
+                <button class="menu-btn" onclick="showSection('tasks-section')">משימות ומעקב</button>
+                <button class="menu-btn" onclick="showSection('documents-section')">מסמכים וחוזים</button>
+                <button class="menu-btn" onclick="showSection('archive-section')">ארכיון לקוחות</button>
+            </div>
+        </div>
+
+        <!-- חלון מודאלי לניהול ערכות נושא -->
+        <div id="themeModal" class="modal-backdrop">
+            <div class="modal-content" style="max-width: 480px;">
+                <button type="button" class="close-modal-btn" onclick="closeThemeModal()">✕</button>
+                <h2 style="margin-top: 0;">🎨 בחירת ערכות נושא וצבעים</h2>
+                <p style="font-size: 13px; color: #666;">בחר עיצוב מוכן מהעיגולים הצבעוניים או התאם אישית:</p>
+                
+                <div style="margin: 20px 0; text-align: center;">
+                    <label style="margin-bottom: 10px; display: block;">ערכות נושא מוכנות:</label>
+                    <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                        <div onclick="setPresetTheme('#eef2f7', '#1e3a8a', '#f8fafc', '#333333')" title="כחול מקצועי" style="width: 42px; height: 42px; border-radius: 50%; background: #1e3a8a; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor: pointer;"></div>
+                        <div onclick="setPresetTheme('#f0fdf4', '#166534', '#dcfce7', '#14532d')" title="ירוק עסקי" style="width: 42px; height: 42px; border-radius: 50%; background: #166534; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor: pointer;"></div>
+                        <div onclick="setPresetTheme('#faf5ff', '#581c87', '#f3e8ff', '#3b0764')" title="סגול מלכותי" style="width: 42px; height: 42px; border-radius: 50%; background: #6b21a8; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor: pointer;"></div>
+                        <div onclick="setPresetTheme('#fefce8', '#854d0e', '#fef9c3', '#713f12')" title="זהב חם" style="width: 42px; height: 42px; border-radius: 50%; background: #ca8a04; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor: pointer;"></div>
+                        <div onclick="setPresetTheme('#f8fafc', '#334155', '#f1f5f9', '#0f172a')" title="אפור אלגנטי" style="width: 42px; height: 42px; border-radius: 50%; background: #334155; border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); cursor: pointer;"></div>
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+                <div class="color-picker-circle-wrapper">
+                    <input type="color" id="pickerHomeBg" class="color-circle-input" value="#eef2f7" onchange="applyCustomThemes()">
+                    <div style="flex: 1;"><label style="margin:0; cursor:pointer;" for="pickerHomeBg">צבע רקע המסך הראשי</label></div>
+                </div>
+
+                <div class="color-picker-circle-wrapper">
+                    <input type="color" id="pickerPrimary" class="color-circle-input" value="#1e3a8a" onchange="applyCustomThemes()">
+                    <div style="flex: 1;"><label style="margin:0; cursor:pointer;" for="pickerPrimary">צבע ראשי לכפתורים וכותרות</label></div>
+                </div>
+
+                <div class="color-picker-circle-wrapper">
+                    <input type="color" id="pickerCardBg" class="color-circle-input" value="#f8fafc" onchange="applyCustomThemes()">
+                    <div style="flex: 1;"><label style="margin:0; cursor:pointer;" for="pickerCardBg">צבע רקע לכרטיסיות ופאנלים</label></div>
+                </div>
+
+                <div class="color-picker-circle-wrapper">
+                    <input type="color" id="pickerTextColor" class="color-circle-input" value="#333333" onchange="applyCustomThemes()">
+                    <div style="flex: 1;"><label style="margin:0; cursor:pointer;" for="pickerTextColor">צבע טקסט כללי</label></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" style="flex: 1; background-color: #718096;" onclick="resetDefaultTheme()">אפס לברירת מחדל</button>
+                    <button type="button" style="flex: 1;" onclick="closeThemeModal()">שמור וסגור</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. ניהול לקוחות -->
+        <div id="clients-section" class="container section-view">
+            <div class="back-bar">
+                <button class="back-btn" onclick="showSection('home-screen')">← חזרה למסך הראשי</button>
+
+                <div class="top-excel-compact-box">
+                    <h4>📊 קבצי אקסל (CSV/XLSX):</h4>
+                    <button class="btn-export" style="font-size:12px; padding:4px 10px;" onclick="exportToExcel()">ייצא לקובץ</button>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <label for="excelFile" style="font-weight:normal; margin:0; font-size:12px; cursor:pointer;">ייבא:</label>
+                        <input type="file" id="excelFile" accept=".csv, .xlsx, .xls" onchange="importExcel(event)" style="font-size:11px; padding:2px; max-width:180px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="clients-sub-nav">
+                <span style="font-weight: bold; margin-left: 5px;">תצוגה:</span>
+                <button class="sub-nav-btn active" id="filter-all" onclick="setStatusFilter('הכל')">📋 כל הלקוחות</button>
+                <button class="sub-nav-btn" id="filter-names" onclick="setStatusFilter('שמות_בלבד')">👥 רשימת שמות</button>
+                <button class="sub-nav-btn" id="filter-active" onclick="setStatusFilter('פעילים')">🟢 פעילים</button>
+                <button class="sub-nav-btn" id="filter-prospects" onclick="setStatusFilter('מתעניינים')">🟡 מתעניינים / לידים</button>
+                <button class="sub-nav-btn" id="filter-inactive" onclick="setStatusFilter('לא_פעילים')">🔴 לא פעילים</button>
+                <button class="sub-nav-btn btn-add-nav" onclick="openAddClientModal()">➕ הוסף לקוח חדש</button>
+            </div>
+
+            <h1 id="sectionMainTitle">ניהול לקוחות וכרטיסיות קשר</h1>
+
+            <div id="clientsNamesContainer" style="display: none; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 25px;">
+                <h2 style="margin-top:0;">רשימת כל הלקוחות (לחץ על שם לפרטים ועריכה)</h2>
+                <div id="clientsNamesGrid" class="clients-names-list"></div>
+            </div>
+
+            <div id="mainClientsFormAndTable">
+                <h2>טבלת לקוחות</h2>
+                <div class="form-group">
+                    <label>חיפוש לקוח (לפי שם, טלפון או חברה):</label>
+                    <input type="text" id="searchInput" placeholder="הקלד לחיפוש..." oninput="renderTable()">
+                </div>
+
+                <div class="table-responsive-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>שם הלקוח</th>
+                                <th>חברה / ארגון</th>
+                                <th>טלפון</th>
+                                <th>סטטוס</th>
+                                <th>כמה צריך לשלם (₪)</th>
+                                <th>כמה שולם (₪)</th>
+                                <th>כמה נותר לתשלום (₪)</th>
+                                <th>לאן עבר הכסף (מוטב)</th>
+                                <th>הערות</th>
+                                <th style="text-align: center;">פעולות</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- חלון מודאלי להוספת/עריכת לקוח -->
+        <div id="clientModal" class="modal-backdrop">
+            <div class="modal-content">
+                <button type="button" class="close-modal-btn" onclick="closeClientModal()">✕</button>
+                <h2 id="modalClientTitle" style="margin-top: 0;">פרטי לקוח</h2>
+                <div id="modalClientForm">
+                    <input type="hidden" id="modalClientIndex" value="">
+                    <div class="form-group">
+                        <label>שם מלא:</label>
+                        <input type="text" id="modalName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>חברה / ארגון:</label>
+                        <input type="text" id="modalCompany">
+                    </div>
+                    <div class="form-group">
+                        <label>טלפון:</label>
+                        <input type="text" id="modalPhone">
+                    </div>
+                    <div class="form-group">
+                        <label>דוא"ל:</label>
+                        <input type="email" id="modalEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>סטטוס לקוח:</label>
+                        <select id="modalStatus">
+                            <option value="פעיל">פעיל</option>
+                            <option value="מתעניין">מתעניין / ליד</option>
+                            <option value="בטיפול">בטיפול</option>
+                            <option value="לא פעיל">לא פעיל</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>תחום / מוצר מעניין:</label>
+                        <input type="text" id="modalProduct" placeholder="למשל: ייעוץ עסקי, תוכנה, שירות...">
+                    </div>
+                    <div class="form-group">
+                        <label>סכום שצריך לשלם (₪):</label>
+                        <input type="number" id="modalToPay" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>סכום ששולם בפועל (₪):</label>
+                        <input type="number" id="modalPaid" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>לאן עבר הכסף (מוטב):</label>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                            <select id="modalDestination" style="flex: 1;">
+                                <!-- יתמלא דינמית -->
+                            </select>
+                            <button type="button" class="btn-danger" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;" onclick="deleteBeneficiaryPrompt()">מחק מוטב זה מהרשימה</button>
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <input type="text" id="newBeneficiaryInput" placeholder="הוסף מוטב חדש (למשל: שלומי לחיאני, חיים סבן)..." style="flex: 1; font-size: 13px;">
+                            <button type="button" style="padding: 4px 12px; font-size: 13px; background-color: #276749;" onclick="addNewBeneficiaryFromModal()">הוסף מוטב</button>
+                        </div>
+                    </div>
+
+                    <div class="logs-container-box">
+                        <h3 style="margin-top:0;">📝 יומן התקשרויות ותרשומות</h3>
+                        <div class="form-group">
+                            <label>תאריך לתזכורת חזרה (אופציונלי):</label>
+                            <input type="date" id="modalReminderDate">
+                        </div>
+                        <div class="form-group">
+                            <label>הוסף תרשומת חדשה:</label>
+                            <textarea id="modalNewLogText" rows="2" placeholder="הקלד תרשומת שיחה או פגישה..."></textarea>
+                            <button type="button" style="margin-top: 8px; font-size: 14px; background-color: #276749;" onclick="addClientLogEntry()">הוסף תרשומת ליומן</button>
+                        </div>
+                        <h4>היסטוריית תרשומות:</h4>
+                        <div id="modalLogsList"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>הערות כלליות:</label>
+                        <textarea id="modalNotes" rows="2"></textarea>
+                    </div>
+                    <button type="button" id="modalSubmitBtn" onclick="saveClientFromModal()">שמור נתונים</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. דשבורד -->
+        <div id="dashboard-section" class="container section-view">
+            <div class="back-bar"><button class="back-btn" onclick="showSection('home-screen')">← חזרה למסך הראשי</button></div>
+            <h1>דשבורד ונתונים עסקיים</h1>
+            
+            <div class="dashboard-cards">
+                <div class="card card-highlight">
+                    <h3>סך הכל נגבה (שולם)</h3>
+                    <p id="totalPaidSum">₪0</p>
+                </div>
+                <div class="card">
+                    <h3>סך הכל לתשלום (יתרת חוב)</h3>
+                    <p id="totalRemainingSum">₪0</p>
+                </div>
+                <div class="card">
+                    <h3>סך התחייבויות (צריך לשלם)</h3>
+                    <p id="totalToPaySum">₪0</p>
+                </div>
+            </div>
+
+            <h2>מעקב יתרות חובה אצל מוטבים (כמה כל מוטב חייב לך)</h2>
+            <p style="font-size: 13px; color: #666; margin-top: -10px; margin-bottom: 15px;">ניתן להזין כמה סכום המוטב החזיר אליך, או למחוק את קוביית המוטב באמצעות כפתור ה-✕.</p>
+            <div id="beneficiariesCardsContainer" class="dashboard-cards" style="flex-wrap: wrap;">
+                <!-- יתמלא דינמית בהתאם למוטבים -->
+            </div>
+
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>סך הכל לקוחות פעילים</h3>
+                    <p id="totalActiveCount">0</p>
+                </div>
+                <div class="card">
+                    <h3>מתעניינים / לידים פתוחים</h3>
+                    <p id="totalProspectsCount">0</p>
+                </div>
+                <div class="card">
+                    <h3>תזכורות ממתינות לטיפול</h3>
+                    <p id="pendingRemindersCount">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ניהול משימות -->
+        <div id="tasks-section" class="container section-view">
+            <div class="back-bar"><button class="back-btn" onclick="showSection('home-screen')">← חזרה למסך הראשי</button></div>
+            <h1>משימות ומעקב צוות</h1>
+            <div class="form-group">
+                <label>הוסף משימה חדשה:</label>
+                <input type="text" id="taskInput" placeholder="תיאור המשימה או המטלה...">
+                <button style="margin-top: 10px;" onclick="addTask()">הוסף משימה</button>
+            </div>
+            <h2>רשימת משימות פתוחות</h2>
+            <ul id="tasksList" style="padding-right: 20px;">
+            </ul>
+        </div>
+
+        <!-- 4. מסמכים וחוזים -->
+        <div id="documents-section" class="container section-view">
+            <div class="back-bar">
+                <button class="back-btn" onclick="showSection('home-screen')">← חזרה למסך הראשי</button>
+
+                <div class="top-excel-compact-box">
+                    <h4>📄 הוספת מסמך / חוזה (PDF):</h4>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="file" id="pdfFileInput" accept=".pdf" multiple onchange="importPDFs(event)" style="font-size:11px; padding:2px; max-width:200px;">
+                    </div>
+                </div>
+            </div>
+
+            <h1>מסמכים, הצעות מחיר וחוזים</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>שם המסמך</th>
+                        <th>תאריך העלאה</th>
+                        <th>פעולות</th>
+                    </tr>
+                </thead>
+                <tbody id="pdfTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 5. ארכיון לקוחות -->
+        <div id="archive-section" class="container section-view">
+            <div class="back-bar">
+                <button class="back-btn" onclick="showSection('home-screen')">← חזרה למסך הראשי</button>
+
+                <div class="top-excel-compact-box">
+                    <h4>📂 הוספת מסמך לארכיון:</h4>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="file" id="scansFileInput" accept=".pdf" multiple onchange="importScans(event)" style="font-size:11px; padding:2px; max-width:200px;">
+                    </div>
+                </div>
+            </div>
+
+            <h1>ארכיון לקוחות וטפסים היסטוריים</h1>
+            
+            <div class="form-group" style="margin-top: 15px;">
+                <label>חיפוש במסמכי הארכיון (לפי שם הקובץ):</label>
+                <input type="text" id="scanSearchInput" placeholder="הקלד שם מסמך לחיפוש..." oninput="renderScansTable()">
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>שם הקובץ</th>
+                        <th>תאריך העלאה</th>
+                        <th>פעולות</th>
+                    </tr>
+                </thead>
+                <tbody id="scansTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toHebrewGematria(n) {
+            if (n <= 0) return '';
+            const letters = {
+                1: 'א', 2: 'ב', 3: 'ג', 4: 'ד', 5: 'ה', 6: 'ו', 7: 'ז', 8: 'ח', 9: 'ט',
+                10: 'י', 20: 'כ', 30: 'ל', 40: 'מ', 50: 'נ', 60: 'ס', 70: 'ע', 80: 'פ', 90: 'צ',
+                100: 'ק', 200: 'ר', 300: 'ש', 400: 'ת'
+            };
+            
+            if (n === 15) return "ט\"ו";
+            if (n === 16) return "ט\"ז";
+
+            let res = "";
+            let hundreds = Math.floor(n / 100);
+            n %= 100;
+            for (let i = 0; i < hundreds; i++) res += 'ת';
+            
+            let tens = Math.floor(n / 10) * 10;
+            n %= 10;
+            if (letters[tens]) res += letters[tens];
+            if (letters[n]) res += letters[n];
+
+            if (res.length > 1) {
+                res = res.slice(0, -1) + '"' + res.slice(-1);
+            } else if (res.length === 1) {
+                res = res + "'";
+            }
+            return res;
+        }
+
+        function toHebrewYear(yearNum) {
+            let shortY = yearNum % 1000;
+            let hundreds = Math.floor(shortY / 100) * 100;
+            let remainder = shortY % 100;
+            
+            let hStr = "";
+            if (hundreds === 700) hStr += "תש";
+            else if (hundreds === 600) hStr += "תר";
+            else if (hundreds === 500) hStr += "תק";
+            
+            let tens = Math.floor(remainder / 10) * 10;
+            let units = remainder % 10;
+            
+            let tLetter = {10:'י', 20:'כ', 30:'ל', 40:'מ', 50:'נ', 60:'ס', 70:'ע', 80:'פ', 90:'צ'}[tens] || '';
+            let uLetter = {1:'א', 2:'ב', 3:'ג', 4:'ד', 5:'ה', 6:'ו', 7:'ז', 8:'ח', 9:'ט'}[units] || '';
+            
+            let part2 = tLetter + uLetter;
+            if (part2.length > 1) {
+                part2 = part2.slice(0, -1) + '"' + part2.slice(-1);
+            }
+            return hStr + part2;
+        }
+
+        function updateHomeHeaderDate() {
+            const now = new Date();
+            
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const fullYear = now.getFullYear();
+            const gregorianStr = `${day}.${month}.${String(fullYear).slice(-2)}`;
+
+            const weekdayFormatter = new Intl.DateTimeFormat('he-IL', { weekday: 'long' });
+            const weekdayStr = weekdayFormatter.format(now);
+
+            let hebrewDateFull = "";
+            try {
+                const formatterDay = new Intl.DateTimeFormat('en-US-u-ca-hebrew', { day: 'numeric' });
+                const formatterMonth = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { month: 'long' });
+                const formatterYear = new Intl.DateTimeFormat('en-US-u-ca-hebrew', { year: 'numeric' });
+
+                let hebrewDayNum = parseInt(formatterDay.format(now));
+                let hebrewMonthName = formatterMonth.format(now);
+                let hebrewYearNum = parseInt(formatterYear.format(now));
+
+                let dayHebrewLetter = toHebrewGematria(hebrewDayNum);
+                let yearHebrewStr = toHebrewYear(hebrewYearNum);
+
+                hebrewDateFull = `${weekdayStr}, ${dayHebrewLetter} ב${hebrewMonthName} ${yearHebrewStr}`;
+            } catch(e) {
+                hebrewDateFull = `${weekdayStr}`;
+            }
+
+            const dateTextElem = document.getElementById('dateText');
+            if (dateTextElem) {
+                dateTextElem.innerHTML = `<bdi>${hebrewDateFull} | ${gregorianStr}</bdi>`;
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const clockElem = document.getElementById('homeClockText');
+            if (clockElem) {
+                clockElem.innerText = `${hours}:${minutes}:${seconds}`;
+            }
+        }
+
+        setInterval(updateClock, 1000);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('app-main-wrapper').style.display = 'block';
+            updateHomeHeaderDate();
+            updateClock();
+            renderTable();
+            renderTasks();
+            updateDashboard();
+            loadCustomThemeSettings();
+        });
+
+        function openThemeModal() {
+            document.getElementById('themeModal').style.display = 'flex';
+        }
+
+        function closeThemeModal() {
+            document.getElementById('themeModal').style.display = 'none';
+        }
+
+        function applyCustomThemes() {
+            const homeBg = document.getElementById('pickerHomeBg').value;
+            const primary = document.getElementById('pickerPrimary').value;
+            const cardBg = document.getElementById('pickerCardBg').value;
+            const textColor = document.getElementById('pickerTextColor').value;
+
+            const root = document.documentElement;
+            root.style.setProperty('--home-bg', homeBg);
+            root.style.setProperty('--primary-color', primary);
+            root.style.setProperty('--primary-hover', primary);
+            root.style.setProperty('--card-bg', cardBg);
+            root.style.setProperty('--text-color', textColor);
+
+            localStorage.setItem('crm_custom_theme', JSON.stringify({ homeBg, primary, cardBg, textColor }));
+        }
+
+        function setPresetTheme(homeBg, primary, cardBg, textColor) {
+            document.getElementById('pickerHomeBg').value = homeBg;
+            document.getElementById('pickerPrimary').value = primary;
+            document.getElementById('pickerCardBg').value = cardBg;
+            document.getElementById('pickerTextColor').value = textColor;
+            applyCustomThemes();
+        }
+
+        function loadCustomThemeSettings() {
+            const saved = localStorage.getItem('crm_custom_theme');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.homeBg) document.getElementById('pickerHomeBg').value = data.homeBg;
+                    if (data.primary) document.getElementById('pickerPrimary').value = data.primary;
+                    if (data.cardBg) document.getElementById('pickerCardBg').value = data.cardBg;
+                    if (data.textColor) document.getElementById('pickerTextColor').value = data.textColor;
+                    applyCustomThemes();
+                } catch(e) {}
+            }
+        }
+
+        function resetDefaultTheme() {
+            localStorage.removeItem('crm_custom_theme');
+            document.getElementById('pickerHomeBg').value = '#eef2f7';
+            document.getElementById('pickerPrimary').value = '#1e3a8a';
+            document.getElementById('pickerCardBg').value = '#f8fafc';
+            document.getElementById('pickerTextColor').value = '#333333';
+            
+            const root = document.documentElement;
+            root.style.removeProperty('--home-bg');
+            root.style.removeProperty('--primary-color');
+            root.style.removeProperty('--primary-hover');
+            root.style.removeProperty('--card-bg');
+            root.style.removeProperty('--text-color');
+        }
+
+        let currentStatusFilter = 'הכל';
+        let currentEditingLogs = [];
+
+        let beneficiaries = JSON.parse(localStorage.getItem('crm_beneficiaries')) || ['שלומי לחיאני', 'חיים סבן'];
+        let beneficiaryReturnedAmounts = JSON.parse(localStorage.getItem('crm_beneficiary_returned_amounts')) || {};
+
+        function toggleDarkMode() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+            }
+        }
+
+        function togglePrintMode() {
+            document.body.classList.toggle('print-mode');
+            if (document.body.classList.contains('print-mode')) {
+                window.print();
+                setTimeout(() => {
+                    document.body.classList.remove('print-mode');
+                }, 1000);
+            }
+        }
+
+        function setStatusFilter(filterType) {
+            currentStatusFilter = filterType;
+            ['filter-all', 'filter-names', 'filter-active', 'filter-prospects', 'filter-inactive'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('active');
+            });
+
+            if (filterType === 'הכל') document.getElementById('filter-all')?.classList.add('active');
+            if (filterType === 'שמות_בלבד') document.getElementById('filter-names')?.classList.add('active');
+            if (filterType === 'פעילים') document.getElementById('filter-active')?.classList.add('active');
+            if (filterType === 'מתעניינים') document.getElementById('filter-prospects')?.classList.add('active');
+            if (filterType === 'לא_פעילים') document.getElementById('filter-inactive')?.classList.add('active');
+
+            renderTable();
+        }
+
+        function showSection(sectionId) {
+            ['home-screen', 'clients-section', 'dashboard-section', 'tasks-section', 'documents-section', 'archive-section'].forEach(id => {
+                const sec = document.getElementById(id);
+                if (sec) sec.style.display = 'none';
+            });
+
+            const floatingBtn = document.getElementById('floatingHomeBtn');
+
+            if (sectionId === 'home-screen') {
+                document.getElementById('home-screen').style.display = 'flex';
+                if (floatingBtn) floatingBtn.style.display = 'none';
+            } else {
+                const target = document.getElementById(sectionId);
+                if (target) target.style.display = 'block';
+                if (floatingBtn) floatingBtn.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            if (sectionId === 'dashboard-section') {
+                updateDashboard();
+            } else if (sectionId === 'documents-section') {
+                renderPDFTable();
+            } else if (sectionId === 'archive-section') {
+                renderScansTable();
+            }
+        }
+
+        let clients = JSON.parse(localStorage.getItem('crm_clients')) || [];
+
+        function sortClients() {
+            clients.sort((a, b) => {
+                let nameA = (a.שם || "").trim();
+                let nameB = (b.שם || "").trim();
+                return nameA.localeCompare(nameB, 'he');
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('clientsTableBody');
+            const namesGrid = document.getElementById('clientsNamesGrid');
+            const mainFormAndTable = document.getElementById('mainClientsFormAndTable');
+            const namesContainer = document.getElementById('clientsNamesContainer');
+            const mainTitle = document.getElementById('sectionMainTitle');
+            const searchTerm = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            if (namesGrid) namesGrid.innerHTML = '';
+
+            sortClients();
+
+            if (currentStatusFilter === 'שמות_בלבד') {
+                if (mainFormAndTable) mainFormAndTable.style.display = 'none';
+                if (namesContainer) namesContainer.style.display = 'block';
+                if (mainTitle) mainTitle.innerText = 'ניהול לקוחות - רשימת שמות';
+
+                clients.forEach((client, index) => {
+                    let nameStr = client.שם || 'ללא שם';
+                    let currentStatus = client.סטטוס || 'פעיל';
+
+                    if (searchTerm && !nameStr.toLowerCase().includes(searchTerm) && !(client.טלפון || '').includes(searchTerm) && !(client.חברה || '').includes(searchTerm)) return;
+
+                    const nameCard = document.createElement('div');
+                    nameCard.className = 'client-name-card ' + (currentStatus === 'פעיל' ? 'client-card-active' : 'client-card-inactive');
+                    nameCard.innerText = nameStr + (currentStatus !== 'פעיל' ? ` (${currentStatus})` : '');
+                    nameCard.onclick = () => openClientModal(index);
+                    if (namesGrid) namesGrid.appendChild(nameCard);
+                });
+            } else {
+                if (namesContainer) namesContainer.style.display = 'none';
+                if (mainFormAndTable) mainFormAndTable.style.display = 'block';
+
+                if (mainTitle) {
+                    if (currentStatusFilter === 'פעילים') mainTitle.innerText = 'ניהול לקוחות - פעילים בלבד';
+                    else if (currentStatusFilter === 'מתעניינים') mainTitle.innerText = 'ניהול לקוחות - מתעניינים / לידים';
+                    else if (currentStatusFilter === 'לא_פעילים') mainTitle.innerText = 'ניהול לקוחות - לא פעילים';
+                    else mainTitle.innerText = 'ניהול לקוחות וכרטיסיות קשר';
+                }
+
+                let rowIndex = 0;
+                clients.forEach((client, index) => {
+                    let nameStr = client.שם || '';
+                    let companyStr = client.חברה || '';
+                    let phoneStr = client.טלפון || '';
+                    let statusStr = client.סטטוס || 'פעיל';
+                    let toPayVal = parseFloat(client.צריך_לשלם) || 0;
+                    let paidVal = parseFloat(client.שולם) || 0;
+                    let remainingVal = toPayVal - paidVal;
+                    let destinationVal = client.לאן_עבר || (beneficiaries[0] || '');
+                    let reminderDate = client.תזכורת || '';
+
+                    if (currentStatusFilter === 'פעילים' && statusStr !== 'פעיל') return;
+                    if (currentStatusFilter === 'מתעניינים' && statusStr !== 'מתעניין') return;
+                    if (currentStatusFilter === 'לא_פעילים' && statusStr !== 'לא פעיל') return;
+
+                    if (nameStr.toLowerCase().includes(searchTerm) || phoneStr.includes(searchTerm) || companyStr.toLowerCase().includes(searchTerm)) {
+                        rowIndex++;
+                        const row = document.createElement('tr');
+                        
+                        let rowClass = "row-client ";
+                        if (statusStr === 'לא פעיל') rowClass += "row-alert";
+                        else if (reminderDate) rowClass += "row-warning";
+                        else rowClass += (rowIndex % 2 === 0) ? "row-even" : "row-active";
+                        row.className = rowClass;
+
+                        let statusIcon = '<span class="status-badge-icon icon-active">✓</span>';
+                        if (statusStr === 'לא פעיל') statusIcon = '<span class="status-badge-icon icon-alert">⚠️</span>';
+                        else if (statusStr === 'מתעניין') statusIcon = '<span class="status-badge-icon icon-warning">⭐</span>';
+
+                        let optionsHTML = '';
+                        beneficiaries.forEach(b => {
+                            optionsHTML += `<option value="${b}" ${destinationVal === b ? 'selected' : ''}>${b}</option>`;
+                        });
+
+                        row.innerHTML = `
+                            <td class="client-name-cell">${statusIcon} ${nameStr}</td>
+                            <td>${companyStr}</td>
+                            <td>${phoneStr}</td>
+                            <td>${statusStr}</td>
+                            <td><input type="number" class="table-input-cell" value="${toPayVal}" oninput="updateClientInlineField(${index}, 'toPay', this.value)" /></td>
+                            <td><input type="number" class="table-input-cell" value="${paidVal}" oninput="updateClientInlineField(${index}, 'paid', this.value)" /></td>
+                            <td id="remaining-cell-${index}" style="font-weight:bold; color:${remainingVal > 0 ? '#dc2626' : '#166534'};">₪${remainingVal.toLocaleString()}</td>
+                            <td>
+                                <select class="table-select-cell" onchange="updateClientInlineField(${index}, 'destination', this.value)">
+                                    ${optionsHTML}
+                                </select>
+                            </td>
+                            <td>${client.הערות || ''}</td>
+                            <td style="text-align: center;">
+                                <button class="btn-edit" style="padding: 4px 10px; font-size: 13px;" onclick="editClient(${index})">ערוך/תרשומת</button>
+                                <button class="btn-danger" style="padding: 4px 10px; font-size: 13px; margin-right: 5px;" onclick="deleteClient(${index})">מחק</button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+                });
+            }
+        }
+
+        function updateClientInlineField(index, field, value) {
+            if (field === 'toPay') {
+                clients[index].צריך_לשלם = parseFloat(value) || 0;
+            } else if (field === 'paid') {
+                clients[index].שולם = parseFloat(value) || 0;
+            } else if (field === 'destination') {
+                clients[index].לאן_עבר = value;
+            }
+
+            let toPay = parseFloat(clients[index].צריך_לשלם) || 0;
+            let paid = parseFloat(clients[index].שולם) || 0;
+            let remaining = toPay - paid;
+
+            const remCell = document.getElementById(`remaining-cell-${index}`);
+            if (remCell) {
+                remCell.innerText = '₪' + remaining.toLocaleString();
+                remCell.style.color = remaining > 0 ? '#dc2626' : '#166534';
+            }
+
+            localStorage.setItem('crm_clients', JSON.stringify(clients));
+            updateDashboard();
+        }
+
+        function populateModalBeneficiariesSelect(selectedValue) {
+            const select = document.getElementById('modalDestination');
+            if (!select) return;
+            select.innerHTML = '';
+            beneficiaries.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.innerText = b;
+                if (b === selectedValue) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function addNewBeneficiaryFromModal() {
+            const input = document.getElementById('newBeneficiaryInput');
+            const name = input ? input.value.trim() : '';
+            if (!name) return;
+
+            if (!beneficiaries.includes(name)) {
+                beneficiaries.push(name);
+                localStorage.setItem('crm_beneficiaries', JSON.stringify(beneficiaries));
+            }
+            input.value = '';
+            populateModalBeneficiariesSelect(name);
+            updateDashboard();
+        }
+
+        function deleteBeneficiaryPrompt() {
+            const select = document.getElementById('modalDestination');
+            const bName = select ? select.value : '';
+            if (!bName) return;
+
+            if (confirm(`האם אתה בטוח שברצונך למחוק את המוטב "${bName}" מהרשימה?`)) {
+                beneficiaries = beneficiaries.filter(b => b !== bName);
+                localStorage.setItem('crm_beneficiaries', JSON.stringify(beneficiaries));
+                delete beneficiaryReturnedAmounts[bName];
+                localStorage.setItem('crm_beneficiary_returned_amounts', JSON.stringify(beneficiaryReturnedAmounts));
+                
+                populateModalBeneficiariesSelect(beneficiaries[0] || '');
+                updateDashboard();
+                renderTable();
+            }
+        }
+
+        function deleteBeneficiaryDirectly(bName) {
+            if (confirm(`האם אתה בטוח שברצונך למחוק את המוטב "${bName}" מהמערכת?`)) {
+                beneficiaries = beneficiaries.filter(b => b !== bName);
+                localStorage.setItem('crm_beneficiaries', JSON.stringify(beneficiaries));
+                delete beneficiaryReturnedAmounts[bName];
+                localStorage.setItem('crm_beneficiary_returned_amounts', JSON.stringify(beneficiaryReturnedAmounts));
+                updateDashboard();
+                renderTable();
+            }
+        }
+
+        function openAddClientModal() {
+            document.getElementById('modalClientIndex').value = "";
+            document.getElementById('modalClientTitle').innerText = 'הוספת לקוח חדש';
+            document.getElementById('modalName').value = "";
+            document.getElementById('modalCompany').value = "";
+            document.getElementById('modalPhone').value = "";
+            document.getElementById('modalEmail').value = "";
+            document.getElementById('modalStatus').value = "פעיל";
+            document.getElementById('modalProduct').value = "";
+            document.getElementById('modalToPay').value = "0";
+            document.getElementById('modalPaid').value = "0";
+            populateModalBeneficiariesSelect(beneficiaries[0] || '');
+            document.getElementById('newBeneficiaryInput').value = "";
+            document.getElementById('modalReminderDate').value = "";
+            document.getElementById('modalNewLogText').value = "";
+            document.getElementById('modalNotes').value = "";
+            document.getElementById('modalSubmitBtn').innerText = "שמור לקוח חדש";
+
+            currentEditingLogs = [];
+            renderModalLogs();
+            document.getElementById('clientModal').style.display = 'flex';
+        }
+
+        function openClientModal(index) {
+            const client = clients[index];
+            document.getElementById('modalClientIndex').value = index;
+            document.getElementById('modalClientTitle').innerText = 'פרטי לקוח: ' + (client.שם || '');
+            document.getElementById('modalName').value = client.שם || '';
+            document.getElementById('modalCompany').value = client.חברה || '';
+            document.getElementById('modalPhone').value = client.טלפון || '';
+            document.getElementById('modalEmail').value = client.אימייל || '';
+            document.getElementById('modalStatus').value = client.סטטוס || 'פעיל';
+            document.getElementById('modalProduct').value = client.מוצר || '';
+            document.getElementById('modalToPay').value = client.צריך_לשלם || 0;
+            document.getElementById('modalPaid').value = client.שולם || 0;
+            populateModalBeneficiariesSelect(client.לאן_עבר || (beneficiaries[0] || ''));
+            document.getElementById('newBeneficiaryInput').value = "";
+            document.getElementById('modalReminderDate').value = client.תזכורת || '';
+            document.getElementById('modalNewLogText').value = "";
+            document.getElementById('modalNotes').value = client.הערות || '';
+            document.getElementById('modalSubmitBtn').innerText = "עדכן נתונים";
+
+            currentEditingLogs = client.יומן ? [...client.יומן] : [];
+            renderModalLogs();
+            document.getElementById('clientModal').style.display = 'flex';
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').style.display = 'none';
+        }
+
+        function addClientLogEntry() {
+            const textInput = document.getElementById('modalNewLogText');
+            const text = textInput?.value.trim();
+            if (!text) return;
+
+            const dateStr = new Date().toLocaleDateString('he-IL');
+            currentEditingLogs.unshift({ date: dateStr, text: text });
+            textInput.value = '';
+            renderModalLogs();
+        }
+
+        function renderModalLogs() {
+            const listDiv = document.getElementById('modalLogsList');
+            if (!listDiv) return;
+            listDiv.innerHTML = '';
+            if (currentEditingLogs.length === 0) {
+                listDiv.innerHTML = '<p style="color:#718096; font-size:13px;">אין תרשומות קודמות ללקוח זה.</p>';
+                return;
+            }
+            currentEditingLogs.forEach((log) => {
+                const item = document.createElement('div');
+                item.className = 'log-item';
+                item.innerHTML = `<span class="log-item-date">${log.date}:</span> ${log.text}`;
+                listDiv.appendChild(item);
+            });
+        }
+
+        function saveClientFromModal() {
+            const index = document.getElementById('modalClientIndex').value;
+            const nameVal = document.getElementById('modalName').value.trim();
+            if (!nameVal) {
+                alert('נא להזין שם לקוח.');
+                return;
+            }
+
+            const clientData = {
+                שם: nameVal,
+                חברה: document.getElementById('modalCompany').value,
+                טלפון: document.getElementById('modalPhone').value,
+                אימייל: document.getElementById('modalEmail').value,
+                סטטוס: document.getElementById('modalStatus').value,
+                מוצר: document.getElementById('modalProduct').value,
+                צריך_לשלם: parseFloat(document.getElementById('modalToPay').value) || 0,
+                שולם: parseFloat(document.getElementById('modalPaid').value) || 0,
+                לאן_עבר: document.getElementById('modalDestination').value,
+                תזכורת: document.getElementById('modalReminderDate').value,
+                הערות: document.getElementById('modalNotes').value,
+                יומן: currentEditingLogs
+            };
+
+            if (index === "") {
+                clients.push(clientData);
+            } else {
+                clients[index] = clientData;
+            }
+
+            sortClients();
+            localStorage.setItem('crm_clients', JSON.stringify(clients));
+            renderTable();
+            updateDashboard();
+            closeClientModal();
+        }
+
+        function exportToExcel() {
+            if (clients.length === 0) {
+                alert('אין לקוחות לייצוא.');
+                return;
+            }
+
+            let csvContent = "\uFEFFשם,חברה,טלפון,אימייל,סטטוס,צריך לשלם,שולם,נותר לתשלום,לאן עבר הכסף,הערות\n";
+            clients.forEach(client => {
+                let toPay = parseFloat(client.צריך_לשלם) || 0;
+                let paid = parseFloat(client.שולם) || 0;
+                let remaining = toPay - paid;
+
+                let row = [
+                    `"${client.שם || ''}"`,
+                    `"${client.חברה || ''}"`,
+                    `"${client.טלפון || ''}"`,
+                    `"${client.אימייל || ''}"`,
+                    `"${client.סטטוס || ''}"`,
+                    `"${toPay}"`,
+                    `"${paid}"`,
+                    `"${remaining}"`,
+                    `"${client.לאן_עבר || (beneficiaries[0] || '')}"`,
+                    `"${client.הערות || ''}"`
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'crm_clients_export.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function importExcel(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                let newClients = [];
+                for (let i = 1; i < jsonRows.length; i++) {
+                    let cols = jsonRows[i];
+                    if (!cols || cols.length === 0) continue;
+                    
+                    let name = cols[0] ? String(cols[0]).trim() : '';
+                    let company = cols[1] ? String(cols[1]).trim() : '';
+                    let phone = cols[2] ? String(cols[2]).trim() : '';
+                    let email = cols[3] ? String(cols[3]).trim() : '';
+                    let status = cols[4] ? String(cols[4]).trim() : 'פעיל';
+                    let toPay = cols[5] ? parseFloat(cols[5]) || 0 : 0;
+                    let paid = cols[6] ? parseFloat(cols[6]) || 0 : 0;
+                    let destination = cols[8] ? String(cols[8]).trim() : (beneficiaries[0] || '');
+                    let notes = cols[9] ? String(cols[9]).trim() : '';
+
+                    if (destination && !beneficiaries.includes(destination)) {
+                        beneficiaries.push(destination);
+                    }
+
+                    if (name || phone) {
+                        newClients.push({
+                            שם: name,
+                            חברה: company,
+                            טלפון: phone,
+                            אימייל: email,
+                            סטטוס: status,
+                            צריך_לשלם: toPay,
+                            שולם: paid,
+                            לאן_עבר: destination,
+                            הערות: notes,
+                            תזכורת: '',
+                            יומן: []
+                        });
+                    }
+                }
+
+                if (newClients.length > 0) {
+                    clients = newClients;
+                    localStorage.setItem('crm_beneficiaries', JSON.stringify(beneficiaries));
+                    sortClients();
+                    localStorage.setItem('crm_clients', JSON.stringify(clients));
+                    renderTable();
+                    updateDashboard();
+                    alert('הנתונים יובאו בהצלחה!');
+                } else {
+                    alert('לא נמצאו נתונים תקינים לקריאה בקובץ.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function editClient(index) {
+            openClientModal(index);
+        }
+
+        function deleteClient(index) {
+            if (confirm('האם אתה בטוח שברצונך למחוק לקוח זה?')) {
+                clients.splice(index, 1);
+                sortClients();
+                localStorage.setItem('crm_clients', JSON.stringify(clients));
+                renderTable();
+                updateDashboard();
+            }
+        }
+
+        function addReturnedAmount(bName) {
+            const input = document.getElementById(`return-input-${bName}`);
+            const val = parseFloat(input ? input.value : 0) || 0;
+            if (val <= 0) return;
+
+            if (!beneficiaryReturnedAmounts[bName]) {
+                beneficiaryReturnedAmounts[bName] = 0;
+            }
+            beneficiaryReturnedAmounts[bName] += val;
+            localStorage.setItem('crm_beneficiary_returned_amounts', JSON.stringify(beneficiaryReturnedAmounts));
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            let totalPaid = 0;
+            let totalToPay = 0;
+            let activeCount = 0;
+            let prospectsCount = 0;
+            let remindersCount = 0;
+
+            let destTotals = {};
+            beneficiaries.forEach(b => destTotals[b] = 0);
+
+            clients.forEach(client => {
+                let toPay = parseFloat(client.צריך_לשלם) || 0;
+                let paid = parseFloat(client.שולם) || 0;
+                totalToPay += toPay;
+                totalPaid += paid;
+
+                let dest = client.לאן_עבר || (beneficiaries[0] || '');
+                if (destTotals[dest] !== undefined) {
+                    destTotals[dest] += paid;
+                } else {
+                    destTotals[dest] = paid;
+                    if (dest && !beneficiaries.includes(dest)) {
+                        beneficiaries.push(dest);
+                        localStorage.setItem('crm_beneficiaries', JSON.stringify(beneficiaries));
+                    }
+                }
+
+                let st = client.סטטוס || 'פעיל';
+                if (st === 'פעיל') activeCount++;
+                else if (st === 'מתעניין') prospectsCount++;
+
+                if (client.תזכורת) remindersCount++;
+            });
+
+            let totalRemaining = totalToPay - totalPaid;
+
+            const beneficiariesContainer = document.getElementById('beneficiariesCardsContainer');
+            if (beneficiariesContainer) {
+                beneficiariesContainer.innerHTML = '';
+                beneficiaries.forEach(b => {
+                    let totalTransferred = destTotals[b] || 0;
+                    let returnedTotal = beneficiaryReturnedAmounts[b] || 0;
+                    let currentDebt = Math.max(0, totalTransferred - returnedTotal);
+
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = currentDebt > 0 ? 'card card-alert' : 'card';
+                    cardDiv.innerHTML = `
+                        <button class="card-delete-x" title="מחק מוטב" onclick="deleteBeneficiaryDirectly('${b}')">✕</button>
+                        <h3>מוטב: ${b}</h3>
+                        <p style="margin-bottom: 6px;">יתרת חובה: ₪${currentDebt.toLocaleString()}</p>
+                        <div style="font-size: 12px; color: #555; margin-bottom: 4px;">סך הכל עבר אליו: ₪${totalTransferred.toLocaleString()}</div>
+                        <div style="font-size: 12px; color: #166534; margin-bottom: 12px;">סך הכל הוחזר: ₪${returnedTotal.toLocaleString()}</div>
+                        
+                        <div style="display: flex; gap: 5px; align-items: center; justify-content: center;">
+                            <input type="number" id="return-input-${b}" placeholder="סכום החזרה..." style="width: 110px; font-size: 12px; padding: 4px;" />
+                            <button style="background-color: #276749; padding: 5px 10px; font-size: 12px; white-space: nowrap;" onclick="addReturnedAmount('${b}')">עדכן החזרה</button>
+                        </div>
+                    `;
+                    beneficiariesContainer.appendChild(cardDiv);
+                });
+            }
+
+            if (document.getElementById('totalPaidSum')) document.getElementById('totalPaidSum').innerText = '₪' + totalPaid.toLocaleString();
+            if (document.getElementById('totalRemainingSum')) document.getElementById('totalRemainingSum').innerText = '₪' + totalRemaining.toLocaleString();
+            if (document.getElementById('totalToPaySum')) document.getElementById('totalToPaySum').innerText = '₪' + totalToPay.toLocaleString();
+
+            if (document.getElementById('totalActiveCount')) document.getElementById('totalActiveCount').innerText = activeCount;
+            if (document.getElementById('totalProspectsCount')) document.getElementById('totalProspectsCount').innerText = prospectsCount;
+            if (document.getElementById('pendingRemindersCount')) document.getElementById('pendingRemindersCount').innerText = remindersCount;
+        }
+
+        let pdfFiles = [];
+
+        function renderPDFTable() {
+            const tbody = document.getElementById('pdfTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (pdfFiles.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">לא הועלו עדיין מסמכים או חוזים.</td></tr>';
+                return;
+            }
+
+            pdfFiles.forEach((pdf, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="client-name-cell">${pdf.שם}</td>
+                    <td>${pdf.תאריך}</td>
+                    <td>
+                        <button style="padding: 4px 10px; font-size: 13px;" onclick="viewPDF('${pdf.url}')">צפה בקובץ</button>
+                        <button class="btn-danger" style="padding: 4px 10px; font-size: 13px; margin-right: 5px;" onclick="deletePDF(${index})">מחק</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function importPDFs(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                pdfFiles.push({
+                    שם: file.name,
+                    תאריך: new Date().toLocaleDateString('he-IL'),
+                    url: URL.createObjectURL(file)
+                });
+            }
+            renderPDFTable();
+            event.target.value = '';
+        }
+
+        function viewPDF(url) {
+            window.open(url, '_blank');
+        }
+
+        function deletePDF(index) {
+            pdfFiles.splice(index, 1);
+            renderPDFTable();
+        }
+
+        let scanFiles = [];
+
+        function renderScansTable() {
+            const tbody = document.getElementById('scansTableBody');
+            const searchTerm = document.getElementById('scanSearchInput') ? document.getElementById('scanSearchInput').value.toLowerCase() : '';
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let filteredScans = scanFiles.filter(scan => scan.שם.toLowerCase().includes(searchTerm));
+
+            if (filteredScans.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">לא נמצאו מסמכים בארכיון.</td></tr>';
+                return;
+            }
+
+            filteredScans.forEach((scan, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="client-name-cell">${scan.שם}</td>
+                    <td>${scan.תאריך}</td>
+                    <td>
+                        <button style="padding: 4px 10px; font-size: 13px;" onclick="viewPDF('${scan.url}')">צפה בקובץ</button>
+                        <button class="btn-danger" style="padding: 4px 10px; font-size: 13px; margin-right: 5px;" onclick="deleteScan(${index})">מחק</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function importScans(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                scanFiles.push({
+                    שם: file.name,
+                    תאריך: new Date().toLocaleDateString('he-IL'),
+                    url: URL.createObjectURL(file)
+                });
+            }
+            renderScansTable();
+            event.target.value = '';
+        }
+
+        function deleteScan(index) {
+            scanFiles.splice(index, 1);
+            renderScansTable();
+        }
+
+        let tasks = JSON.parse(localStorage.getItem('crm_tasks')) || [];
+
+        function renderTasks() {
+            const list = document.getElementById('tasksList');
+            if (!list) return;
+            list.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.style.margin = "10px 0";
+                li.innerHTML = `${task} <button class="btn-danger" style="padding: 2px 8px; font-size: 12px; margin-right: 10px;" onclick="deleteTask(${index})">בוצע/מחק</button>`;
+                list.appendChild(li);
+            });
+        }
+
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            if (input && input.value.trim() !== '') {
+                tasks.push(input.value);
+                localStorage.setItem('crm_tasks', JSON.stringify(tasks));
+                input.value = '';
+                renderTasks();
+            }
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            localStorage.setItem('crm_tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+    </script>
+</body>
+</html>
